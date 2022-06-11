@@ -190,7 +190,7 @@ def show_venue(venue_id):
     "city": venue.city,
     "state": venue.state,
     "phone": venue.phone,
-    "website": venue.website,
+    "website_link": venue.website_link,
     "facebook_link": venue.facebook_link,
     "seeking_talent": venue.seeking_talent,
     "seeking_description": venue.seeking_description,
@@ -214,15 +214,22 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  data ={
-    "name":request.form.get("name"),
-    "city":request.form.get("city"),
-    "state":request.form.get("state"),
-    "address":request.form.get("address"),
-    "phone":request.form.get("phone"),
-    "genres":request.form.getlist("genres"),
-    "facebook_link":request.form.get("facebook_link")
-  }
+  form = VenueForm(request.form)
+  
+  if form.validate():
+    data ={
+      "name":request.form.get("name"),
+      "city":request.form.get("city"),
+      "state":request.form.get("state"),
+      "address":request.form.get("address"),
+      "phone":request.form.get("phone"),
+      "image_link":request.form.get("image_link"),
+      "facebook_link":request.form.get("facebook_link"),
+      "genres":request.form.getlist("genres"),
+      "website_link":request.form.get("website_link"),
+      "seeking_talent":request.form.get("seeking_talent"),
+      "seeking_description":request.form.get("seeking_description"),
+    }
   venue=Venue(name=data["name"],city=data["city"],state=data["state"],address=data["address"],phone=data["phone"],genres=data["genres"],facebook_link=data["facebook_link"])
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
@@ -475,7 +482,12 @@ def edit_venue_submission(venue_id):
     "address": request.form.get("address"),
     "phone": request.form.get("phone"),
     "genres": request.form.getlist("genres"),
-    "facebook_link": request.form.get("facebook_link")
+    "image_link": request.form.get("image_link"),
+    "facebook_link": request.form.get("facebook_link"),
+    "website": request.form.get("website"),
+    "seeking_venue": request.form.get("seeking_venue"),
+    "seeking_description": request.form.get("seeking_description"),    
+
   }
   venue = Venue.query.get(venue_id)
   try:
@@ -510,31 +522,35 @@ def create_artist_submission():
   # called upon submitting the new artist listing form
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
-  data = {
-    "name": request.form.get("name"),
-    "city": request.form.get("city"),
-    "state": request.form.get("state"),
-    "phone": request.form.get("phone"),
-    "genres": request.form.getlist("genres"),
-    "facebook_link": request.form.get("facebook_link"),
-    "website_link": request.form.get("website_link"),
-    "seeking_venue":"seeking_venue" in request.form,
-    "seeking_description":request.form.get("seeking_description")
+  form = ArtistForm(request.form)
 
-  }
-  artist = Artist(name=data["name"], city=data["city"], state=data["state"], phone=data["phone"],
-                genres=data["genres"], facebook_link=data["facebook_link"], website_link=data["website_link"], seeking_venue=data["seeking_venue"], seeking_description=data["seeking_description"],)
+  if form.validate():
+  
+    data = {
+      "name": request.form.get("name"),
+      "city": request.form.get("city"),
+      "state": request.form.get("state"),
+      "phone": request.form.get("phone"),
+      "genres": request.form.getlist("genres"),
+      "facebook_link": request.form.get("facebook_link"),
+      "image_link": request.form.get("image_link"),
+      "website": request.form.get("website"),
+      "seeking_venue":"seeking_venue" in request.form,
+      "seeking_description":request.form.get("seeking_description")
+    }
+    artist = Artist(name=data["name"], city=data["city"], state=data["state"], phone=data["phone"],
+                  genres=data["genres"], facebook_link=data["facebook_link"], website=data["website"], seeking_venue=data["seeking_venue"], seeking_description=data["seeking_description"],)
   # TODO: insert form data as a new Venue record in the db, instead
   # TODO: modify data to be the data object returned from db insertion
   try:
-    db.session.add(artist)
-    db.session.commit()
-    flash('Artist ' + request.form['name'] + ' was successfully listed!')
+      db.session.add(artist)
+      db.session.commit()
+      flash('Artist ' + request.form['name'] + ' was successfully listed!')
   except:
-    db.session.rollback()
-    flash('Artist ' + request.form['name'] + ' was unsuccessfully listed!')
+      db.session.rollback()
+      flash('Artist ' + request.form['name'] + ' was unsuccessfully listed!')
   finally:
-    db.session.close()
+      db.session.close()
   # on successful db insert, flash success
 
   # TODO: on unsuccessful db insert, flash an error instead.
