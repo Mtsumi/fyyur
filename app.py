@@ -134,22 +134,21 @@ def venues():
 def search_venues():
 
   search_term = request.form.get('search_term', '')
-  search_res = db.session.query(Venue).filter(Venue.name.ilike(f'%{search_term}%')).all()
-  #Venue.query.filter(Venue.name.ilike('%' + search_term + '%')).all()
+  search_res = Venue.query.filter(Venue.name.ilike('%' + search_term + '%')).all()
   data =[]
 
-  count = 0
+  
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   
-  for response_search in search_res:
-    count+=1
+  for results in search_res:
+   
     data.append({
-     "id":response_search.id,
-     "name":response_search.name,
-     "num_upcoming_shows": len(db.session.query(Show).filter(Show.venue_id == response_search.id).filter(Show.start_time > datetime.now()).all()),
+     "id":results.id,
+     "name":results.name,
+     "num_upcoming_shows": len(db.session.query(Show).filter(Show.venue_id == results.id).filter(Show.start_time > datetime.now()).all()),
 
     })
-
+  count = len(search_res)
   response = {
     "count": count,
     "data": data
@@ -272,9 +271,11 @@ def create_venue_submission():
 def delete_venue(venue_id):
   try:
 
-    venue = Venue.query.get(venue_id)
+    venue = Venue.query.filter(venue_id == venue_id).all()
     db.session.delete(venue)
     db.session.commit()
+    flash("Venue has been deleted successfully".format(
+            venue[0]['name']))
   except:
     db.session.rollback()
   finally:
@@ -304,22 +305,22 @@ def artists():
 
 @app.route('/artists/search', methods=['POST'])
 def search_artists():
-  search_term = request.form.get("search_term")
-  show_artists = Artist.query.filter(Artist.name.ilike('%' + search_term + '%')).all()
+  search_term = request.form.get('search_term', '')
+  search_res = Artist.query.filter(Artist.name.ilike('%' + search_term + '%')).all()
   data = []
 
-  count = 0
+  
 
   # TODO: implement search on artists with partial string search. Ensure it is case-insensitive.
   # seach for Hop should return "The Musical Hop".
   # search for "Music" should return "The Musical Hop" and "Park Square Live Music & Coffee"
-  for search_artist in show_artists:
-    count += 1
+  for result in search_res:
+    
     data.append({
-      "id": search_artist.id,
-      "name": search_artist.name,
+      "id": result.id,
+      "name": result.name,
     })
-
+  count = len(search_res)
   response = {
     "count": count,
     "data": data
@@ -334,8 +335,8 @@ def search_artists():
 def show_artist(artist_id):
   # shows the venue page with the given venue_id
   # TODO: replace with real venue data from the venues table, using venue_id
-  artist = Artist.query.get(artist_id)
-  dataList = []
+  artquery = Artist.query.get(artist_id)
+  data = []
   past_shows = []
   upcoming_shows = []
   current_time = datetime.now().strftime('%m/%d/%Y')
@@ -358,17 +359,17 @@ def show_artist(artist_id):
       "artist_image_link": venue.image_link,
       "start_time": show.start_time.strftime('%m/%d/%Y')
     })
-  dataList.append({
-    "id": artist.id,
-    "name": artist.name,
-    "genres": artist.genres,
-    "city": artist.city,
-    "state": artist.state,
-    "phone": artist.phone,
-    "website": artist.website,
-    "facebook_link": artist.facebook_link,
-    "seeking_description": artist.seeking_description,
-    "image_link": artist.image_link,
+  data.append({
+    "id": artquery.id,
+    "name": artquery.name,
+    "genres": artquery.genres,
+    "city": artquery.city,
+    "state": artquery.state,
+    "phone": artquery.phone,
+    "website": artquery.website,
+    "facebook_link": artquery.facebook_link,
+    "seeking_description": artquery.seeking_description,
+    "image_link": artquery.image_link,
     "past_shows": past_shows,
     "upcoming_shows": upcoming_shows,
     "past_shows_count": len(past_shows),
@@ -376,8 +377,8 @@ def show_artist(artist_id):
   })
 
 
-  data = list(filter(lambda d: d['id'] == artist_id, dataList))[0]
-  return render_template('pages/show_artist.html', artist=data)
+  data_list = list(filter(lambda d: d['id'] == artist_id, data))[0]
+  return render_template('pages/show_artist.html', artist=data_list)
 
 #  Update
 #  ----------------------------------------------------------------
@@ -553,16 +554,7 @@ def shows():
         }
       response.append(data)
   return render_template('pages/shows.html', shows=response)
-  """ data.append({
-      "venue_id": show.venue_id,
-      "venue_name": Venue.query.get(show.venue_id).name,
-      "artist_id": show.artist_id,
-      "artist_name": Artist.query.get(show.artist_id).name,
-      "artist_image_link": Artist.query.get(show.artist_id).image_link,
-      "start_time": show.start_time.strftime('%m/%d/%Y')
-    })
-
-  return render_template('pages/shows.html', shows=data) """
+ 
 
 @app.route('/shows/create')
 def create_shows():
